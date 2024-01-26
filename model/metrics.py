@@ -8,7 +8,7 @@ def softmax_accuracy(preds, labels):
     :param labels: ground truth labelt
     :return: average accuracy
     """
-    correct_prediction = tf.equal(tf.argmax(preds, 1), tf.to_int64(labels))
+    correct_prediction = tf.equal(tf.argmax(preds, 1), tf.compat.v1.to_int64(labels))
     accuracy_all = tf.cast(correct_prediction, tf.float32)
     return tf.reduce_mean(accuracy_all)
 
@@ -21,7 +21,7 @@ def sigmoid_accuracy(preds, labels):
     :return: average accuracy
     """
     # if pred > 0 then sigmoid(pred) > 0.5
-    correct_prediction = tf.equal(tf.cast(preds >= 0.0, tf.int64), tf.to_int64(labels))
+    correct_prediction = tf.equal(tf.cast(preds >= 0.0, tf.int64), tf.compat.v1.to_int64(labels))
     accuracy_all = tf.cast(correct_prediction, tf.float32)
     return tf.reduce_mean(accuracy_all)
 
@@ -33,7 +33,7 @@ def binary_accuracy(preds, labels):
     :param labels: ground truth label
     :return: average accuracy
     """
-    correct_prediction = tf.equal(tf.cast(preds >= 0.5, tf.int64), tf.to_int64(labels))
+    correct_prediction = tf.equal(tf.cast(preds >= 0.5, tf.int64), tf.compat.v1.to_int64(labels))
     accuracy_all = tf.cast(correct_prediction, tf.float32)
     return tf.reduce_mean(accuracy_all)
 
@@ -46,7 +46,7 @@ def softmax_confusion_matrix(preds, labels):
     int_preds = preds >= 0.0
     int_preds = tf.cast(int_preds, tf.int32)
 
-    return tf.confusion_matrix(labels, int_preds)
+    return tf.compat.v1.confusion_matrix(labels, int_preds)
 
 def softmax_cross_entropy(outputs, labels):
     """ computes average softmax cross entropy """
@@ -64,6 +64,6 @@ def binary_cross_entropy(outputs, labels):
     # clip values to avoid having log(0)
     eps = 1e-4
     outputs = tf.clip_by_value(outputs, eps, 1-eps)
-    cross_entropy = tf.reduce_mean(labels * -tf.log(outputs) + (1-labels) * -tf.log(1-outputs))
+    cross_entropy = tf.reduce_mean(labels * -tf.compat.v1.log(outputs) + (1-labels) * -tf.compat.v1.log(1-outputs))
 
     return cross_entropy

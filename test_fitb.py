@@ -13,6 +13,13 @@ from utils import construct_feed_dict
 from model.CompatibilityGAE import CompatibilityGAE
 from dataloaders import DataLoaderPolyvore, DataLoaderFashionGen
 
+# tsar code
+"""Eager execution is a mode in TensorFlow that allows you to evaluate operations immediately as they are called, rather than building a computational graph. 
+However, some operations, like tf.placeholder(), are not compatible with eager execution.
+To fix this issue, you can disable eager execution in your TensorFlow script"""
+tf.compat.v1.disable_eager_execution()
+# end tsar code
+
 def test_fitb(args):
     args = namedtuple("Args", args.keys())(*args.values())
     load_from = args.load_from
@@ -58,14 +65,23 @@ def test_fitb(args):
 
     num_support = len(train_support)
     placeholders = {
-        'row_indices': tf.placeholder(tf.int32, shape=(None,)),
-        'col_indices': tf.placeholder(tf.int32, shape=(None,)),
-        'dropout': tf.placeholder_with_default(0., shape=()),
-        'weight_decay': tf.placeholder_with_default(0., shape=()),
-        'is_train': tf.placeholder_with_default(True, shape=()),
-        'support': [tf.sparse_placeholder(tf.float32, shape=(None, None)) for sup in range(num_support)],
-        'node_features': tf.placeholder(tf.float32, shape=(None, None)),
-        'labels': tf.placeholder(tf.float32, shape=(None,))   
+        # 'row_indices': tf.placeholder(tf.int32, shape=(None,)),
+        # 'col_indices': tf.placeholder(tf.int32, shape=(None,)),
+        # 'dropout': tf.placeholder_with_default(0., shape=()),
+        # 'weight_decay': tf.placeholder_with_default(0., shape=()),
+        # 'is_train': tf.placeholder_with_default(True, shape=()),
+        # 'support': [tf.sparse_placeholder(tf.float32, shape=(None, None)) for sup in range(num_support)],
+        # 'node_features': tf.placeholder(tf.float32, shape=(None, None)),
+        # 'labels': tf.placeholder(tf.float32, shape=(None,)) 
+
+        'row_indices': tf.compat.v1.placeholder(tf.int32, shape=(None,)),
+        'col_indices': tf.compat.v1.placeholder(tf.int32, shape=(None,)),
+        'dropout': tf.compat.v1.placeholder_with_default(0., shape=()),
+        'weight_decay': tf.compat.v1.placeholder_with_default(0., shape=()),
+        'is_train': tf.compat.v1.placeholder_with_default(True, shape=()),
+        'support': [tf.compat.v1.sparse_placeholder(tf.float32, shape=(None, None)) for sup in range(num_support)],
+        'node_features': tf.compat.v1.placeholder(tf.float32, shape=(None, None)),
+        'labels': tf.compat.v1.placeholder(tf.float32, shape=(None,))   
     }
 
     model = CompatibilityGAE(placeholders,
@@ -88,11 +104,11 @@ def test_fitb(args):
                         q_labels, q_r_indices, q_c_indices, 0., is_train=BN_AS_TRAIN)
 
     # Add ops to save and restore all the variables.
-    saver = tf.train.Saver()
+    saver = tf.compat.v1.train.Saver()
     sigmoid = lambda x: 1/(1+np.exp(-x))
 
-    with tf.Session() as sess:
-        saver.restore(sess, load_from+'/'+'best_epoch.ckpt')
+    with tf.compat.v1.Session() as sess:
+        saver.restore(sess, load_from +'/'+'best_epoch.ckpt')
 
         val_avg_loss, val_acc, conf, pred = sess.run([model.loss, model.accuracy, model.confmat, model.predict()], feed_dict=val_feed_dict)
 

@@ -79,4 +79,5 @@ def resample_fitb():
     with open(questions_file_resampled, 'w') as f:
         json.dump(questions_resampled, f)
 
-    print('Saved!')
+    print(questions_file_resampled, 'Saved!')
+# resample_fitb()

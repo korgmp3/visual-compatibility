@@ -4,7 +4,8 @@ from .metrics import softmax_confusion_matrix, sigmoid_cross_entropy
 from .metrics import sigmoid_accuracy
 
 
-flags = tf.app.flags
+# flags = tf.app.flags
+flags = tf.compat.v1.flags
 FLAGS = flags.FLAGS
 
 
@@ -47,7 +48,7 @@ class Model(object):
 
     def build(self):
         """ Wrapper for _build() """
-        with tf.variable_scope(self.name):
+        with tf.compat.v1.variable_scope(self.name):
             self._build()
 
         # Build sequential layer model
@@ -63,15 +64,15 @@ class Model(object):
         self._confmat()
 
         if self.wd:
-            reg_weights = tf.get_collection("l2_regularize")
+            reg_weights = tf.compat.v1.get_collection("l2_regularize")
             loss_l2 = tf.add_n([ tf.nn.l2_loss(v) for v in reg_weights ]) * self.wd
             self.total_loss += self.loss + loss_l2
         else:
             self.total_loss = self.loss
 
-        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        update_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
-            reg_weights = tf.get_collection("l2_regularize")
+            reg_weights = tf.compat.v1.get_collection("l2_regularize")
             self.opt_op = self.optimizer.minimize(self.total_loss, global_step=self.global_step)
 
     def predict(self):
@@ -105,7 +106,8 @@ class CompatibilityGAE(Model):
         self.batch_norm = batch_norm
         self.init = init
 
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=0.9, beta2=0.999, epsilon=1.e-8)
+        # self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=0.9, beta2=0.999, epsilon=1.e-8)
+        self.optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=self.learning_rate, beta1=0.9, beta2=0.999, epsilon=1.e-8)
 
         self.build()
 

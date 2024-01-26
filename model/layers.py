@@ -1,5 +1,8 @@
 from .initializations import *
 import tensorflow as tf
+# import tensorflow.compat.v1 as tf
+
+
 
 # global unique layer ID dictionary for layer name assignment
 _LAYER_UIDS = {}
@@ -8,7 +11,7 @@ _LAYER_UIDS = {}
 def dot(x, y, sparse=False):
     """Wrapper for tf.matmul (sparse vs dense)."""
     if sparse:
-        res = tf.sparse_tensor_dense_matmul(x, y)
+        res = tf.compat.v1.sparse_tensor_dense_matmul(x, y)
     else:
         res = tf.matmul(x, y)
     return res
@@ -74,7 +77,7 @@ class Dense(Layer):
                  bias=False, batch_norm=False, **kwargs):
         super(Dense, self).__init__(**kwargs)
 
-        with tf.variable_scope(self.name + '_vars'):
+        with tf.compat.v1.variable_scope(self.name + '_vars'):
             self.vars['weights'] = weight_variable_random_uniform(input_dim, output_dim, name="weights")
 
             if bias:
@@ -101,7 +104,7 @@ class Dense(Layer):
         n_outputs = self.act(x_n)
 
         if self.batch_norm:
-            n_outputs = tf.layers.batch_normalization(n_outputs, training=self.is_train)
+            n_outputs = tf.compat.v1.layers.batch_normalization(n_outputs, training=self.is_train)
 
         return n_outputs
 
@@ -118,10 +121,10 @@ class Dense(Layer):
 class GCN(Layer):
     """Graph convolution layer for multiple degree adjacencies"""
     def __init__(self, input_dim, output_dim, support, num_support, is_train, dropout=0.,
-                 act=tf.nn.relu, bias=False, batch_norm=False, init='def', **kwargs):
+                 act=tf.compat.v1.nn.relu, bias=False, batch_norm=False, init='def', **kwargs):
         super(GCN, self).__init__(**kwargs)
         assert init in ['def', 'he']
-        with tf.variable_scope(self.name + '_vars'):
+        with tf.compat.v1.variable_scope(self.name + '_vars'):
             if init == 'def':
                 init_func = weight_variable_random_uniform
             else:
@@ -153,7 +156,7 @@ class GCN(Layer):
             self._log_vars()
 
     def _call(self, input):
-        x_n = tf.nn.dropout(input, 1 - self.dropout)
+        x_n = tf.compat.v1.nn.dropout(input, 1 - self.dropout)
 
         supports_n = []
 
@@ -165,7 +168,7 @@ class GCN(Layer):
             support = self.support[i]
 
             # then multiply with rating matrices
-            supports_n.append(tf.sparse_tensor_dense_matmul(support, tmp_n))
+            supports_n.append(tf.compat.v1.sparse_tensor_dense_matmul(support, tmp_n))
 
         z_n = tf.add_n(supports_n)
 
@@ -175,7 +178,7 @@ class GCN(Layer):
         n_outputs = self.act(z_n)
 
         if self.batch_norm:
-            n_outputs = tf.layers.batch_normalization(n_outputs, training=self.is_train)
+            n_outputs = tf.compat.v1.layers.batch_normalization(n_outputs, training=self.is_train)
 
         return n_outputs
 
@@ -197,7 +200,7 @@ class MLPDecoder(Layer):
                  dropout=0., act=lambda x: x, n_out=1, use_bias=False, **kwargs):
         super(MLPDecoder, self).__init__(**kwargs)
 
-        with tf.variable_scope(self.name + '_vars'):
+        with tf.compat.v1.variable_scope(self.name + '_vars'):
             self.vars['weights'] = weight_variable_random_uniform(input_dim, n_out, name='weights')
             if use_bias:
                 self.vars['bias'] = bias_variable_zero([n_out], name="bias")
@@ -213,21 +216,21 @@ class MLPDecoder(Layer):
             self._log_vars()
 
     def _call(self, inputs):
-        node_inputs = tf.nn.dropout(inputs, 1 - self.dropout)
+        node_inputs = tf.compat.v1.nn.dropout(inputs, 1 - self.dropout)
 
         # r corresponds to the selected rows, and c to the selected columns
-        row_inputs = tf.gather(node_inputs, self.r_indices)
-        col_inputs = tf.gather(node_inputs, self.c_indices)
+        row_inputs = tf.compat.v1.gather(node_inputs, self.r_indices)
+        col_inputs = tf.compat.v1.gather(node_inputs, self.c_indices)
 
-        diff = tf.abs(row_inputs - col_inputs)
+        diff = tf.compat.v1.abs(row_inputs - col_inputs)
 
-        outputs = tf.matmul(diff, self.vars['weights'])
+        outputs = tf.compat.v1.matmul(diff, self.vars['weights'])
 
         if self.use_bias:
             outputs += self.vars['bias']
 
         if self.n_out == 1:
-            outputs = tf.squeeze(outputs) # remove single dimension
+            outputs = tf.compat.v1.squeeze(outputs) # remove single dimension
 
         outputs = self.act(outputs)
 
